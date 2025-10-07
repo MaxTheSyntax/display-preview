@@ -66,6 +66,25 @@
                     mm
                 </label>
             </div>
+
+            <div class="pattern-toggle">
+                <label class="unit-label">Pattern</label>
+                <label>
+                    <input type="radio" name="patternType" value="gradient" checked>
+                    Gradient
+                </label>
+                <label>
+                    <input type="radio" name="patternType" value="checkerboard">
+                    Checkerboard
+                </label>
+            </div>
+
+            <div id="checkerboardOptions" class="checkerboard-options" style="display: none;">
+                <div class="form-group">
+                    <label for="squareSize">Square Size (px)</label>
+                    <input type="number" id="squareSize" step="1" min="1" placeholder="Auto" value="20">
+                </div>
+            </div>
             
             <div id="resolutionInputs" class="resolution-inputs">
                 <div class="form-group">

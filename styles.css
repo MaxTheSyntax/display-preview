@@ -113,7 +113,8 @@ h1 {
 }
 
 .input-mode,
-.measurement-units {
+.measurement-units,
+.pattern-toggle {
     margin: 20px 0;
     padding: 12px;
     background: var(--bg-tertiary);
@@ -124,7 +125,8 @@ h1 {
 }
 
 .input-mode label,
-.measurement-units label {
+.measurement-units label,
+.pattern-toggle label {
     cursor: pointer;
     font-size: 0.875rem;
     color: var(--text-secondary);
@@ -141,8 +143,13 @@ h1 {
 }
 
 .input-mode input[type="radio"],
-.measurement-units input[type="radio"] {
+.measurement-units input[type="radio"],
+.pattern-toggle input[type="radio"] {
     cursor: pointer;
+}
+
+.checkerboard-options {
+    margin: 20px 0;
 }
 
 .btn-generate {
