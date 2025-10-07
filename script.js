@@ -12,6 +12,8 @@ const previewPlaceholder = document.getElementById('previewPlaceholder');
 const infoPanel = document.getElementById('infoPanel');
 const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 const sidebar = document.getElementById('sidebar');
+const previewInfoBanner = document.getElementById('previewInfoBanner');
+const monitorDiagonalInput = document.getElementById('monitorDiagonal');
 
 // Pan and Zoom state
 let scale = 1;
@@ -20,6 +22,7 @@ let panY = 0;
 let isDragging = false;
 let startX = 0;
 let startY = 0;
+let userScreenPPI = 96;
 
 // Mobile menu toggle
 mobileMenuToggle.addEventListener('click', () => {
@@ -229,6 +232,7 @@ function resetView() {
 generateBtn.addEventListener('click', generatePreview);
 
 function generatePreview() {
+    updatePhysicalScreenInfo();
     // Get input values
     const unit = document.querySelector('input[name="measurementUnit"]:checked').value;
 
@@ -290,8 +294,8 @@ function generatePreview() {
 }
 
 function renderPreview(screenWidth, screenHeight, deviceWidth, deviceHeight, resWidth, resHeight, ppi) {
-    // Get user's screen PPI (approximate - assumes 96 DPI as default)
-    const userPPI = window.devicePixelRatio * 96;
+    // Use the best-known CSS pixels-per-inch for the user's screen
+    const userPPI = userScreenPPI || 96;
     
     // Convert inches to pixels on user's screen
     const screenWidthPx = screenWidth * userPPI;
@@ -406,6 +410,63 @@ function createPattern(element, resWidth, resHeight) {
     element.style.backgroundSize = '100% 100%';
     element.style.backgroundPosition = 'center';
     element.style.imageRendering = 'pixelated';
+}
+
+function updatePhysicalScreenInfo() {
+    if (!previewInfoBanner || typeof window === 'undefined') {
+        return;
+    }
+
+    const cssWidth = window.screen && window.screen.width ? window.screen.width : window.innerWidth;
+    const cssHeight = window.screen && window.screen.height ? window.screen.height : window.innerHeight;
+
+    if (!cssWidth || !cssHeight) {
+        previewInfoBanner.style.opacity = '0';
+        return;
+    }
+
+    const cssDiagonal = Math.sqrt(cssWidth * cssWidth + cssHeight * cssHeight);
+    if (!cssDiagonal) {
+        previewInfoBanner.style.opacity = '0';
+        return;
+    }
+
+    const manualDiagonalRaw = monitorDiagonalInput ? parseFloat(monitorDiagonalInput.value) : NaN;
+    const manualDiagonal = !isNaN(manualDiagonalRaw) && manualDiagonalRaw > 0 ? manualDiagonalRaw : null;
+
+    let diagonalInches;
+    let widthInches;
+    let heightInches;
+
+    if (manualDiagonal) {
+        userScreenPPI = cssDiagonal / manualDiagonal;
+        diagonalInches = manualDiagonal;
+        widthInches = cssWidth / userScreenPPI;
+        heightInches = cssHeight / userScreenPPI;
+    } else {
+        userScreenPPI = 96;
+        diagonalInches = cssDiagonal / userScreenPPI;
+        widthInches = cssWidth / userScreenPPI;
+        heightInches = cssHeight / userScreenPPI;
+    }
+
+    if (!isFinite(diagonalInches) || !isFinite(widthInches) || !isFinite(heightInches)) {
+        previewInfoBanner.style.opacity = '0';
+        return;
+    }
+
+    const fmt = (value) => Math.round(value * 10) / 10;
+    previewInfoBanner.textContent = manualDiagonal
+        ? `≈ ${fmt(diagonalInches)}″ display (${fmt(widthInches)} × ${fmt(heightInches)} in, manual)`
+        : `≈ ${fmt(diagonalInches)}″ display (${fmt(widthInches)} × ${fmt(heightInches)} in)`;
+    previewInfoBanner.style.opacity = '1';
+}
+
+updatePhysicalScreenInfo();
+window.addEventListener('resize', updatePhysicalScreenInfo);
+window.addEventListener('orientationchange', updatePhysicalScreenInfo);
+if (monitorDiagonalInput) {
+    monitorDiagonalInput.addEventListener('input', updatePhysicalScreenInfo);
 }
 
 function calculateAspectRatio(width, height) {
