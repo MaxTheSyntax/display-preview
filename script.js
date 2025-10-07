@@ -5,6 +5,7 @@ const devicePreview = document.getElementById('devicePreview');
 const displayInfo = document.getElementById('displayInfo');
 const resolutionInputs = document.getElementById('resolutionInputs');
 const ppiInputs = document.getElementById('ppiInputs');
+const checkerboardOptions = document.getElementById('checkerboardOptions');
 const previewContainer = document.getElementById('previewContainer');
 const previewContent = document.getElementById('previewContent');
 const previewPlaceholder = document.getElementById('previewPlaceholder');
@@ -53,6 +54,20 @@ inputModeRadios.forEach(radio => {
 
 // Measurement unit radios
 const measurementRadios = document.querySelectorAll('input[name="measurementUnit"]');
+
+// Pattern type radio buttons
+const patternTypeRadios = document.querySelectorAll('input[name="patternType"]');
+
+// Toggle checkerboard options visibility
+patternTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'checkerboard') {
+            checkerboardOptions.style.display = 'block';
+        } else {
+            checkerboardOptions.style.display = 'none';
+        }
+    });
+});
 
 // Helper: convert value from unit -> inches
 function toInches(value, unit) {
@@ -358,7 +373,16 @@ function createPattern(element, resWidth, resHeight) {
         ctx.fillRect(0, 0, resWidth, resHeight);
     } else if (patternType === 'checkerboard') {
         // Create a black and white checkerboard pattern
-        const squareSize = Math.max(1, Math.floor(Math.min(resWidth, resHeight) / 20)); // Adjust size based on resolution
+        const squareSizeInput = document.getElementById('squareSize').value;
+        let squareSize;
+        
+        if (squareSizeInput && !isNaN(squareSizeInput) && squareSizeInput > 0) {
+            // Use custom square size
+            squareSize = parseInt(squareSizeInput);
+        } else {
+            // Auto-calculate based on resolution (default to 20 squares across smaller dimension)
+            squareSize = Math.max(1, Math.floor(Math.min(resWidth, resHeight) / 20));
+        }
         
         for (let y = 0; y < resHeight; y += squareSize) {
             for (let x = 0; x < resWidth; x += squareSize) {

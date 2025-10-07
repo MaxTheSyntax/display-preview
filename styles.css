@@ -148,6 +148,10 @@ h1 {
     cursor: pointer;
 }
 
+.checkerboard-options {
+    margin: 20px 0;
+}
+
 .btn-generate {
     width: 100%;
     padding: 12px;
