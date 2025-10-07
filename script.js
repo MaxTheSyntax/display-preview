@@ -23,15 +23,88 @@ inputModeRadios.forEach(radio => {
     });
 });
 
+// Measurement unit radios
+const measurementRadios = document.querySelectorAll('input[name="measurementUnit"]');
+
+// Helper: convert value from unit -> inches
+function toInches(value, unit) {
+    if (isNaN(value) || value === null) return NaN;
+    switch (unit) {
+        case 'in': return value;
+        case 'cm': return value / 2.54;
+        case 'mm': return value / 25.4;
+        default: return value;
+    }
+}
+
+// Helper: convert inches -> unit
+function fromInches(valueInInches, unit) {
+    if (isNaN(valueInInches) || valueInInches === null) return NaN;
+    switch (unit) {
+        case 'in': return valueInInches;
+        case 'cm': return valueInInches * 2.54;
+        case 'mm': return valueInInches * 25.4;
+        default: return valueInInches;
+    }
+}
+
+// Convert all dimension inputs when unit changes
+measurementRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        const newUnit = this.value;
+
+        // Read current unit (the other radio that was checked previously)
+        // Find the unchecked one? Better to read data-attribute; fallback: assume previous was inches if not stored.
+        const prevUnit = document.querySelector('input[name="measurementUnit"][data-prev="true"]')
+            ? document.querySelector('input[name="measurementUnit"][data-prev="true"]').value
+            : (newUnit === 'in' ? 'cm' : 'in');
+
+    // We'll store the new selection as prev for next time
+    measurementRadios.forEach(r => r.removeAttribute('data-prev'));
+    this.setAttribute('data-prev', 'true');
+
+        // Inputs to convert: screenWidth, screenHeight, deviceWidth, deviceHeight
+        const fields = ['screenWidth', 'screenHeight', 'deviceWidth', 'deviceHeight'];
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            const raw = parseFloat(el.value);
+            if (isNaN(raw)) return;
+
+            // Convert from prevUnit -> inches -> newUnit
+            const valueInInches = toInches(raw, prevUnit);
+            const converted = fromInches(valueInInches, newUnit);
+
+            // Round sensibly: if unit is inches keep one decimal, cm/mm -> one or no decimals
+            let rounded;
+            if (newUnit === 'in') rounded = Math.round(converted * 10) / 10;
+            else if (newUnit === 'cm') rounded = Math.round(converted * 10) / 10;
+            else rounded = Math.round(converted); // mm
+
+            el.value = rounded;
+        });
+    });
+});
+
+// Mark the initially-checked measurement radio so conversions know the previous unit
+measurementRadios.forEach(r => { if (r.checked) r.setAttribute('data-prev', 'true'); });
+
 // Generate preview button
 generateBtn.addEventListener('click', generatePreview);
 
 function generatePreview() {
     // Get input values
-    const screenWidth = parseFloat(document.getElementById('screenWidth').value);
-    const screenHeight = parseFloat(document.getElementById('screenHeight').value);
-    const deviceWidth = parseFloat(document.getElementById('deviceWidth').value);
-    const deviceHeight = parseFloat(document.getElementById('deviceHeight').value);
+    const unit = document.querySelector('input[name="measurementUnit"]:checked').value;
+
+    // Parse raw values according to selected unit and convert to inches for internal calculations
+    const rawScreenWidth = parseFloat(document.getElementById('screenWidth').value);
+    const rawScreenHeight = parseFloat(document.getElementById('screenHeight').value);
+    const rawDeviceWidth = parseFloat(document.getElementById('deviceWidth').value);
+    const rawDeviceHeight = parseFloat(document.getElementById('deviceHeight').value);
+
+    const screenWidth = toInches(rawScreenWidth, unit);
+    const screenHeight = toInches(rawScreenHeight, unit);
+    const deviceWidth = toInches(rawDeviceWidth, unit);
+    const deviceHeight = toInches(rawDeviceHeight, unit);
     
     // Validate basic inputs
     if (!screenWidth || !screenHeight || !deviceWidth || !deviceHeight) {
@@ -103,11 +176,25 @@ function renderPreview(screenWidth, screenHeight, deviceWidth, deviceHeight, res
     // Display information
     const diagonalInches = Math.sqrt(screenWidth * screenWidth + screenHeight * screenHeight).toFixed(2);
     const aspectRatio = calculateAspectRatio(resWidth, resHeight);
-    
+    // Get currently selected unit to show converted values
+    const selectedUnit = document.querySelector('input[name="measurementUnit"]:checked').value;
+
+    // Convert inches back to selected unit for display
+    const displayScreenW = fromInches(screenWidth, selectedUnit);
+    const displayScreenH = fromInches(screenHeight, selectedUnit);
+    const displayDeviceW = fromInches(deviceWidth, selectedUnit);
+    const displayDeviceH = fromInches(deviceHeight, selectedUnit);
+
+    // Format values
+    function fmt(val) {
+        if (selectedUnit === 'mm') return Math.round(val);
+        return Math.round(val * 10) / 10;
+    }
+
     displayInfo.innerHTML = `
-        <p><strong>Screen Diagonal:</strong> ${diagonalInches} inches</p>
-        <p><strong>Screen Dimensions:</strong> ${screenWidth}" × ${screenHeight}"</p>
-        <p><strong>Device Dimensions:</strong> ${deviceWidth}" × ${deviceHeight}"</p>
+        <p><strong>Screen Diagonal:</strong> ${diagonalInches} inches (${fmt(fromInches(diagonalInches, selectedUnit))} ${selectedUnit})</p>
+        <p><strong>Screen Dimensions:</strong> ${Math.round(screenWidth*10)/10}" × ${Math.round(screenHeight*10)/10}" (${fmt(displayScreenW)} ${selectedUnit} × ${fmt(displayScreenH)} ${selectedUnit})</p>
+        <p><strong>Device Dimensions:</strong> ${Math.round(deviceWidth*10)/10}" × ${Math.round(deviceHeight*10)/10}" (${fmt(displayDeviceW)} ${selectedUnit} × ${fmt(displayDeviceH)} ${selectedUnit})</p>
         <p><strong>Resolution:</strong> ${resWidth} × ${resHeight} pixels</p>
         <p><strong>Pixel Density:</strong> ${Math.round(ppi)} PPI</p>
         <p><strong>Aspect Ratio:</strong> ${aspectRatio}</p>
