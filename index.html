@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Preview</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Display Preview Tool</h1>
+        <p class="subtitle">Preview your LCD screen to-scale before buying</p>
+        
+        <div class="input-section">
+            <h2>Display Specifications</h2>
+            
+            <div class="form-group">
+                <label for="screenWidth">Screen Width (inches):</label>
+                <input type="number" id="screenWidth" step="0.1" min="0" placeholder="e.g., 13.3">
+            </div>
+            
+            <div class="form-group">
+                <label for="screenHeight">Screen Height (inches):</label>
+                <input type="number" id="screenHeight" step="0.1" min="0" placeholder="e.g., 7.5">
+            </div>
+            
+            <div class="form-group">
+                <label for="deviceWidth">Device Width (inches):</label>
+                <input type="number" id="deviceWidth" step="0.1" min="0" placeholder="e.g., 14">
+            </div>
+            
+            <div class="form-group">
+                <label for="deviceHeight">Device Height (inches):</label>
+                <input type="number" id="deviceHeight" step="0.1" min="0" placeholder="e.g., 9">
+            </div>
+            
+            <div class="input-mode">
+                <label>
+                    <input type="radio" name="inputMode" value="resolution" checked>
+                    Resolution
+                </label>
+                <label>
+                    <input type="radio" name="inputMode" value="ppi">
+                    Pixel Density (PPI)
+                </label>
+            </div>
+            
+            <div id="resolutionInputs" class="resolution-inputs">
+                <div class="form-group">
+                    <label for="resWidth">Horizontal Resolution (px):</label>
+                    <input type="number" id="resWidth" step="1" min="1" placeholder="e.g., 1920">
+                </div>
+                
+                <div class="form-group">
+                    <label for="resHeight">Vertical Resolution (px):</label>
+                    <input type="number" id="resHeight" step="1" min="1" placeholder="e.g., 1080">
+                </div>
+            </div>
+            
+            <div id="ppiInputs" class="ppi-inputs" style="display: none;">
+                <div class="form-group">
+                    <label for="ppi">Pixel Density (PPI):</label>
+                    <input type="number" id="ppi" step="1" min="1" placeholder="e.g., 166">
+                </div>
+            </div>
+            
+            <button id="generateBtn" class="btn-generate">Generate Preview</button>
+        </div>
+        
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h2>Preview</h2>
+            <div class="info-panel">
+                <div id="displayInfo"></div>
+            </div>
+            <div class="preview-container">
+                <div id="devicePreview" class="device-preview">
+                    <div id="screenPreview" class="screen-preview"></div>
+                </div>
+            </div>
+            <p class="scale-info">Preview is rendered to-scale based on your monitor's pixel density</p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
