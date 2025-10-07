@@ -292,8 +292,8 @@ function renderPreview(screenWidth, screenHeight, deviceWidth, deviceHeight, res
     screenPreview.style.width = screenWidthPx + 'px';
     screenPreview.style.height = screenHeightPx + 'px';
     
-    // Create gradient based on resolution
-    createGradient(screenPreview, resWidth, resHeight);
+    // Create pattern based on resolution
+    createPattern(screenPreview, resWidth, resHeight);
     
     // Display information
     const diagonalInches = Math.sqrt(screenWidth * screenWidth + screenHeight * screenHeight).toFixed(2);
@@ -335,23 +335,39 @@ function renderPreview(screenWidth, screenHeight, deviceWidth, deviceHeight, res
     }
 }
 
-function createGradient(element, resWidth, resHeight) {
-    // Create a canvas to draw the gradient
+function createPattern(element, resWidth, resHeight) {
+    // Get selected pattern type
+    const patternType = document.querySelector('input[name="patternType"]:checked').value;
+    
+    // Create a canvas to draw the pattern
     const canvas = document.createElement('canvas');
     canvas.width = resWidth;
     canvas.height = resHeight;
     const ctx = canvas.getContext('2d');
     
-    // Create a colorful gradient that matches the resolution
-    const gradient = ctx.createLinearGradient(0, 0, resWidth, resHeight);
-    gradient.addColorStop(0, '#FF0080');
-    gradient.addColorStop(0.25, '#FF8C00');
-    gradient.addColorStop(0.5, '#40E0D0');
-    gradient.addColorStop(0.75, '#9370DB');
-    gradient.addColorStop(1, '#00CED1');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, resWidth, resHeight);
+    if (patternType === 'gradient') {
+        // Create a colorful gradient that matches the resolution
+        const gradient = ctx.createLinearGradient(0, 0, resWidth, resHeight);
+        gradient.addColorStop(0, '#FF0080');
+        gradient.addColorStop(0.25, '#FF8C00');
+        gradient.addColorStop(0.5, '#40E0D0');
+        gradient.addColorStop(0.75, '#9370DB');
+        gradient.addColorStop(1, '#00CED1');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, resWidth, resHeight);
+    } else if (patternType === 'checkerboard') {
+        // Create a black and white checkerboard pattern
+        const squareSize = Math.max(1, Math.floor(Math.min(resWidth, resHeight) / 20)); // Adjust size based on resolution
+        
+        for (let y = 0; y < resHeight; y += squareSize) {
+            for (let x = 0; x < resWidth; x += squareSize) {
+                const isBlack = (Math.floor(x / squareSize) + Math.floor(y / squareSize)) % 2 === 0;
+                ctx.fillStyle = isBlack ? '#000000' : '#FFFFFF';
+                ctx.fillRect(x, y, squareSize, squareSize);
+            }
+        }
+    }
     
     // Add resolution text overlay
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
