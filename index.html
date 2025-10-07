@@ -19,6 +19,22 @@
         <div class="sidebar-content">
             <h1>Display Preview</h1>
             <p class="subtitle">Preview LCD screens to-scale</p>
+
+            <div class="measurement-units">
+                <label class="unit-label">Units</label>
+                <label>
+                    <input type="radio" name="measurementUnit" value="in" checked>
+                    in
+                </label>
+                <label>
+                    <input type="radio" name="measurementUnit" value="cm">
+                    cm
+                </label>
+                <label>
+                    <input type="radio" name="measurementUnit" value="mm">
+                    mm
+                </label>
+            </div>
             
             <div class="form-group">
                 <label for="screenWidth">Screen Width</label>
@@ -51,34 +67,6 @@
                 </label>
             </div>
 
-            <div class="measurement-units">
-                <label class="unit-label">Units</label>
-                <label>
-                    <input type="radio" name="measurementUnit" value="in" checked>
-                    in
-                </label>
-                <label>
-                    <input type="radio" name="measurementUnit" value="cm">
-                    cm
-                </label>
-                <label>
-                    <input type="radio" name="measurementUnit" value="mm">
-                    mm
-                </label>
-            </div>
-
-            <div class="pattern-toggle">
-                <label class="unit-label">Pattern</label>
-                <label>
-                    <input type="radio" name="patternType" value="gradient" checked>
-                    Gradient
-                </label>
-                <label>
-                    <input type="radio" name="patternType" value="checkerboard">
-                    Checkerboard
-                </label>
-            </div>
-
             <div id="checkerboardOptions" class="checkerboard-options" style="display: none;">
                 <div class="form-group">
                     <label for="squareSize">Square Size (px)</label>
@@ -103,6 +91,18 @@
                     <label for="ppi">PPI</label>
                     <input type="number" id="ppi" step="1" min="1" placeholder="166">
                 </div>
+            </div>
+
+            <div class="pattern-toggle">
+                <label class="unit-label">Screen Pattern</label>
+                <label>
+                    <input type="radio" name="patternType" value="gradient" checked>
+                    Gradient
+                </label>
+                <label>
+                    <input type="radio" name="patternType" value="checkerboard">
+                    Checkerboard
+                </label>
             </div>
             
             <button id="generateBtn" class="btn-generate">Generate</button>
