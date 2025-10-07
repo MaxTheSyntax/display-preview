@@ -363,8 +363,9 @@ function createGradient(element, resWidth, resHeight) {
     // Convert canvas to image and set as background
     const imageUrl = canvas.toDataURL();
     element.style.backgroundImage = `url(${imageUrl})`;
-    element.style.backgroundSize = 'cover';
+    element.style.backgroundSize = '100% 100%';
     element.style.backgroundPosition = 'center';
+    element.style.imageRendering = 'pixelated';
 }
 
 function calculateAspectRatio(width, height) {
