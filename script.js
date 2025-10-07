@@ -1,11 +1,39 @@
 // Get elements
 const generateBtn = document.getElementById('generateBtn');
-const previewSection = document.getElementById('previewSection');
 const screenPreview = document.getElementById('screenPreview');
 const devicePreview = document.getElementById('devicePreview');
 const displayInfo = document.getElementById('displayInfo');
 const resolutionInputs = document.getElementById('resolutionInputs');
 const ppiInputs = document.getElementById('ppiInputs');
+const previewContainer = document.getElementById('previewContainer');
+const previewContent = document.getElementById('previewContent');
+const previewPlaceholder = document.getElementById('previewPlaceholder');
+const infoPanel = document.getElementById('infoPanel');
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+const sidebar = document.getElementById('sidebar');
+
+// Pan and Zoom state
+let scale = 1;
+let panX = 0;
+let panY = 0;
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+
+// Mobile menu toggle
+mobileMenuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('mobile-open');
+});
+
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768 && 
+        !sidebar.contains(e.target) && 
+        !mobileMenuToggle.contains(e.target) &&
+        sidebar.classList.contains('mobile-open')) {
+        sidebar.classList.remove('mobile-open');
+    }
+});
 
 // Input mode radio buttons
 const inputModeRadios = document.querySelectorAll('input[name="inputMode"]');
@@ -54,7 +82,6 @@ measurementRadios.forEach(radio => {
         const newUnit = this.value;
 
         // Read current unit (the other radio that was checked previously)
-        // Find the unchecked one? Better to read data-attribute; fallback: assume previous was inches if not stored.
         const prevUnit = document.querySelector('input[name="measurementUnit"][data-prev="true"]')
             ? document.querySelector('input[name="measurementUnit"][data-prev="true"]').value
             : (newUnit === 'in' ? 'cm' : 'in');
@@ -87,6 +114,101 @@ measurementRadios.forEach(radio => {
 
 // Mark the initially-checked measurement radio so conversions know the previous unit
 measurementRadios.forEach(r => { if (r.checked) r.setAttribute('data-prev', 'true'); });
+
+// Pan and Zoom functionality
+previewContainer.addEventListener('mousedown', startDrag);
+previewContainer.addEventListener('mousemove', drag);
+previewContainer.addEventListener('mouseup', endDrag);
+previewContainer.addEventListener('mouseleave', endDrag);
+previewContainer.addEventListener('wheel', zoom, { passive: false });
+
+// Touch support for mobile
+previewContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+previewContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+previewContainer.addEventListener('touchend', endDrag);
+
+let touchStartDistance = 0;
+let touchStartScale = 1;
+
+function handleTouchStart(e) {
+    if (e.touches.length === 1) {
+        // Single touch - pan
+        e.preventDefault();
+        isDragging = true;
+        startX = e.touches[0].clientX - panX;
+        startY = e.touches[0].clientY - panY;
+        previewContainer.classList.add('dragging');
+    } else if (e.touches.length === 2) {
+        // Two fingers - zoom
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        touchStartDistance = Math.sqrt(dx * dx + dy * dy);
+        touchStartScale = scale;
+    }
+}
+
+function handleTouchMove(e) {
+    if (e.touches.length === 1 && isDragging) {
+        e.preventDefault();
+        panX = e.touches[0].clientX - startX;
+        panY = e.touches[0].clientY - startY;
+        updateTransform();
+    } else if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        const scaleChange = distance / touchStartDistance;
+        scale = Math.min(Math.max(0.1, touchStartScale * scaleChange), 5);
+        updateTransform();
+    }
+}
+
+function startDrag(e) {
+    if (previewPlaceholder.style.display !== 'none') return;
+    isDragging = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+    previewContainer.classList.add('dragging');
+}
+
+function drag(e) {
+    if (!isDragging) return;
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    updateTransform();
+}
+
+function endDrag() {
+    isDragging = false;
+    previewContainer.classList.remove('dragging');
+}
+
+function zoom(e) {
+    if (previewPlaceholder.style.display !== 'none') return;
+    e.preventDefault();
+    
+    const delta = -e.deltaY;
+    const scaleChange = delta > 0 ? 1.1 : 0.9;
+    
+    const newScale = scale * scaleChange;
+    scale = Math.min(Math.max(0.1, newScale), 5); // Limit scale between 0.1 and 5
+    
+    updateTransform();
+}
+
+function updateTransform() {
+    previewContent.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${scale})`;
+}
+
+function resetView() {
+    scale = 1;
+    panX = 0;
+    panY = 0;
+    updateTransform();
+}
 
 // Generate preview button
 generateBtn.addEventListener('click', generatePreview);
@@ -192,20 +314,25 @@ function renderPreview(screenWidth, screenHeight, deviceWidth, deviceHeight, res
     }
 
     displayInfo.innerHTML = `
-        <p><strong>Screen Diagonal:</strong> ${diagonalInches} inches (${fmt(fromInches(diagonalInches, selectedUnit))} ${selectedUnit})</p>
-        <p><strong>Screen Dimensions:</strong> ${Math.round(screenWidth*10)/10}" × ${Math.round(screenHeight*10)/10}" (${fmt(displayScreenW)} ${selectedUnit} × ${fmt(displayScreenH)} ${selectedUnit})</p>
-        <p><strong>Device Dimensions:</strong> ${Math.round(deviceWidth*10)/10}" × ${Math.round(deviceHeight*10)/10}" (${fmt(displayDeviceW)} ${selectedUnit} × ${fmt(displayDeviceH)} ${selectedUnit})</p>
-        <p><strong>Resolution:</strong> ${resWidth} × ${resHeight} pixels</p>
-        <p><strong>Pixel Density:</strong> ${Math.round(ppi)} PPI</p>
-        <p><strong>Aspect Ratio:</strong> ${aspectRatio}</p>
-        <p><strong>Total Pixels:</strong> ${(resWidth * resHeight / 1000000).toFixed(2)} megapixels</p>
+        <p><strong>Diagonal:</strong> ${diagonalInches}"</p>
+        <p><strong>Screen:</strong> ${fmt(displayScreenW)} × ${fmt(displayScreenH)} ${selectedUnit}</p>
+        <p><strong>Resolution:</strong> ${resWidth} × ${resHeight}px</p>
+        <p><strong>PPI:</strong> ${Math.round(ppi)}</p>
+        <p><strong>Aspect:</strong> ${aspectRatio}</p>
+        <p><strong>Pixels:</strong> ${(resWidth * resHeight / 1000000).toFixed(2)}MP</p>
     `;
     
-    // Show preview section
-    previewSection.style.display = 'block';
+    // Show preview and hide placeholder
+    previewPlaceholder.style.display = 'none';
+    infoPanel.style.display = 'block';
     
-    // Scroll to preview
-    previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Reset view
+    resetView();
+    
+    // Close mobile sidebar if open
+    if (window.innerWidth <= 768) {
+        sidebar.classList.remove('mobile-open');
+    }
 }
 
 function createGradient(element, resWidth, resHeight) {
